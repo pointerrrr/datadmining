@@ -57,9 +57,9 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
 
 def getClassDistribution(lijst):
     goodNodes = 0
-    for i in range(len(x)):
-        goodNodes += x[i][-1]
-    return (goodNodes, len(x)-goodNodes)
+    for i in range(len(lijst)):
+        goodNodes += lijst[i][-1]
+    return (goodNodes, len(lijst)-goodNodes)
 
 def consider_split(node, splitIndex):
     splitIndex = int(splitIndex)
@@ -134,5 +134,6 @@ x= [
     [23,0,1,40,0],
     [50,1,1,28,0]
     ]
+# 32.5 | 0.5 | 0.5 | > 20 | 0.5
 y = [0,0,0,0,0,1,1,1,1,1]
 tree_grow(x,y,0,0,5)
