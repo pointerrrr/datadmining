@@ -26,7 +26,7 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
             splitValue = consider_split(curNode, possibleSplits[i])
             splitValues.append(splitValue)
         splitValues = sorted(splitValues, key=lambda tup: tup[1])
-       
+        splitValues.reverse()
         lList = []
         rList = []
         for splitValue in splitValues:
@@ -87,7 +87,7 @@ def consider_split(node, splitIndex):
         if splitValues[i] > max[1]:
             max = (i, splitValues[i])
 
-    return ((x[splits[max[0]]][splitIndex]+ x[splits[max[0]] - 1][splitIndex] ) / 2, max[0], splitIndex)
+    return ((x[splits[max[0]]][splitIndex]+ x[splits[max[0]] - 1][splitIndex] ) / 2, splitValues[max[0]], splitIndex)
 
 def tree_spliit(node):
 
@@ -97,13 +97,32 @@ def tree_spliit(node):
 
 def findSplits(x, splitIndex):
     splits = []
+    squashedList = []
+    for i in range(0, len(x)):
+        if len(squashedList) == 0 or x[i][splitIndex] != squashedList[-1][0]:
+            tuple = (0,0)
+            if(x[i][-1] == 0):
+                tuple = (1,0)
+            else:
+                tuple = (0,1)
+            squashedList.append([x[i][splitIndex], tuple])
+        else:
+            tuple = squashedList[-1][1]
+            if(x[i][-1] == 0):
+                tuple = (tuple[0] + 1, tuple[1])
+            else:
+                tuple = (tuple[0], tuple[1] + 1)
+            squashedList[-1][1] = tuple 
 
-    previous = x[0][-1]
-
-    for i in range(1, len(x)):
-        if previous != x[i][-1]:
-            previous = x[i][-1]
-            splits.append(i)
+    previous = squashedList[0]
+    total = squashedList[0][1][0] + squashedList[0][1][1]
+    print("hoi")
+    print(previous[1][0] + previous[1][1])
+    for i in range(1, len(squashedList)):
+        if (previous[1][0] / (previous[1][0] + previous[1][1])) != (squashedList[i][1][0] / (squashedList[i][1][0] + squashedList[i][1][1])):
+            previous = squashedList[i]
+            splits.append(total)
+        total += squashedList[i][1][0] + squashedList[i][1][1]
     return splits
 
 def impurity(node):
@@ -113,9 +132,9 @@ def impurity(node):
 def random_unique_list(length, upperbound):
     result = np.empty(length)
     for i in range(length):
-        next = random.randint(0, upperbound-1)
+        next = random.randint(0, upperbound-2)
         while np.isin(next, result):
-            next = random.randint(0, upperbound-1)
+            next = random.randint(0, upperbound-2)
         result[i] = int(next)
     return result
 
@@ -137,3 +156,14 @@ x= [
 # 32.5 | 0.5 | 0.5 | > 20 | 0.5
 y = [0,0,0,0,0,1,1,1,1,1]
 tree_grow(x,y,0,0,5)
+
+[[22, 0, 0, 28, 1], 
+ [46, 0, 1, 32, 0], 
+ [25, 0, 0, 27, 1], 
+ [23, 0, 1, 40, 0], 
+ [24, 1, 1, 24, 1], 
+ [29, 1, 1, 32, 0], 
+ [45, 1, 1, 30, 0], 
+ [63, 1, 1, 58, 1], 
+ [36, 1, 0, 52, 1], 
+ [50, 1, 1, 28, 0]]
