@@ -9,7 +9,7 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
     goodNodes = 0
     for i in range(len(x)):
         goodNodes += x[i][-1]
-    start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, x))
+    start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, x), splitIndex = -1, splitValue = -1)
     print(start.tuple)
     toDoNodes = [start]
 
@@ -17,10 +17,12 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         curNode = toDoNodes[0]
         del toDoNodes[0]
 
+        x= curNode.tuple[2]
+
         if len(curNode.tuple[2]) < nmin:
             continue
 
-        possibleSplits = random_unique_list(nfeat, len(curNode.tuple[2][0]))
+        possibleSplits = random_unique_list(nfeat, len(curNode.tuple[2][0]) -1)
         splitValues = []
         for i in range(len(possibleSplits)):
             splitValue = consider_split(curNode, possibleSplits[i])
@@ -29,9 +31,13 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         splitValues.reverse()
         lList = []
         rList = []
+        currentSplitValue = -1
+        currentSplitIndex = -1
         for splitValue in splitValues:
             if splitValue[2] == -1:
                 continue
+            currentSplitValue = splitValue[0]
+            currentSplitIndex = splitValue[2]
             lList = []
             rList = []
             for i in range(len(x)):
@@ -41,15 +47,18 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
                     rList.append(x[i])
             if len(lList) >= minleaf and len(rList) >= minleaf:
                 break
-        if len(lList) <= 0 and len(rList)<= 0:
-            raise Exception("Iets fucked up met de lengte")
-        ll, rl = getClassDistribution(lList)
-        lr, rr = getClassDistribution(rList)
-        lNode = AnyNode(tuple=(ll, rl, lList), parent=curNode)
-        rNode = AnyNode(tuple=(lr, rr, rList), parent=curNode)
 
-        toDoNodes.append(lNode)
-        toDoNodes.append(rNode)
+        if len(lList) != 0:
+            ll, rl = getClassDistribution(lList)
+            lNode = AnyNode(tuple=(ll, rl, lList), parent=curNode)
+            toDoNodes.append(lNode)
+        if len(rList) != 0:
+            lr, rr = getClassDistribution(rList)
+            rNode = AnyNode(tuple=(lr, rr, rList), parent=curNode)
+            toDoNodes.append(rNode)
+        if len(lList) != 0 or len(rList) != 0:
+            curNode.splitIndex = currentSplitIndex
+            curNode.splitValue = currentSplitValue
         
         curNode = 0
 
@@ -89,10 +98,6 @@ def consider_split(node, splitIndex):
 
     return ((x[splits[max[0]]][splitIndex]+ x[splits[max[0]] - 1][splitIndex] ) / 2, splitValues[max[0]], splitIndex)
 
-def tree_spliit(node):
-
-    return 0
-
 
 
 def findSplits(x, splitIndex):
@@ -131,11 +136,17 @@ def impurity(node):
 
 def random_unique_list(length, upperbound):
     result = np.empty(length)
+    indices = np.empty(upperbound)
+
+    for i  in range(upperbound):
+        indices[i] = i
+
     for i in range(length):
-        next = random.randint(0, upperbound-2)
-        while np.isin(next, result):
-            next = random.randint(0, upperbound-2)
-        result[i] = int(next)
+        next = random.randint(0, upperbound-1)
+        upperbound -= 1
+        result[i] = indices[next]
+        indices[next] = indices[upperbound]
+        
     return result
 
 def tree_pred(x, tr):
@@ -155,7 +166,23 @@ x= [
     ]
 # 32.5 | 0.5 | 0.5 | > 20 | 0.5
 y = [0,0,0,0,0,1,1,1,1,1]
-tree_grow(x,y,0,0,5)
+print(RenderTree(tree_grow(x,y,0,0,5)))
+
+print("newTree!!!")
+x= [
+    [22,0,0,28,1],
+    [46,0,1,32,0],
+    [24,1,1,24,1],
+    [25,0,0,27,1],
+    [29,1,1,32,0],
+    [45,1,1,30,0],
+    [63,1,1,58,1],
+    [36,1,0,52,1],
+    [23,0,1,40,0],
+    [50,1,1,28,0]
+    ]
+print(RenderTree(tree_grow(x,y,3,0,5)))
+#tree_grow(x,y,0,0,5)
 
 [[22, 0, 0, 28, 1], 
  [46, 0, 1, 32, 0], 
