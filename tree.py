@@ -8,6 +8,7 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
     ###for i in range(len(x)):
         ###print( np.append(x[i], y[i]))
         ###newArray[i] = np.concatenate(x[i], y[i])
+    # Goodnodes --> class = 1
     goodNodes = 0
     for i in range(len(newArray)):
         goodNodes += newArray[i][-1]
@@ -21,13 +22,16 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         nodeArray = curNode.tuple[2]
         nodeClassifier = curNode.tuple[3]
 
-        if len(curNode.tuple[2]) < nmin:
+        if len(nodeArray) < minleaf:
+                raise Exception("Dit mag niet voor komen")
+        if len(nodeArray) < nmin:
             continue
+         
 
         possibleSplits = np.array(random_unique_list(nfeat, len(curNode.tuple[2][0])))
         splitValues = []
         for i in range(len(possibleSplits)):
-            splitValue = consider_split(curNode, possibleSplits[i])
+            splitValue = consider_split(curNode, 3)
             splitValues.append(splitValue)
         splitValues = sorted(splitValues, key=lambda tup: tup[1])
         splitValues.reverse()
@@ -38,7 +42,8 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         rClassifier = []
         currentSplitValue = -1
         currentSplitIndex = -1
-        for splitValue in splitValues:
+        for i in range(len(splitValues)):
+            splitValue = splitValues[i]
             if splitValue[2] == -1:
                 continue
             currentSplitValue = splitValue[0]
@@ -57,6 +62,7 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
 
         if len(lList) < minleaf or len(rList) < minleaf:
                 continue
+
         if len(lList) != 0:
             ll, rl = getClassDistribution(lList, lClassifier)
             toDoNodes.append(AnyNode(tuple=(ll, rl, np.array(lList), np.array(lClassifier)), parent=curNode))
@@ -114,12 +120,12 @@ def consider_split(node, splitIndex):
         lr, rr = getClassDistribution(r, rc)
         iR = impurity((lr, rr))
         piR = len(r) / len(x)
-        splitValues.append(iT - (piL * iL + piR * iR))
+        splitValues.append(iT - ((piL * iL) + (piR * iR)))
     max = (-1, -1)
     for i in range(len(splitValues)):
         if splitValues[i] > max[1]:
             max = (i, splitValues[i])
-    result = ((x[splits[max[0]]][splitIndex]+ x[splits[max[0]] - 1][splitIndex] ) / 2, splitValues[max[0]], splitIndex)
+    result = ((x[splits[max[0]]][splitIndex]+ x[splits[max[0]] - 1][splitIndex] ) / 2, max[1], splitIndex)
     return result
 
 
@@ -171,25 +177,54 @@ def random_unique_list(length, upperbound):
         
     return result
 
-def prediction(entry, tree):
-    currentNode = tree
+def prediction(entry, currentNode):
 
-    while currentNode !=0:
-        if(len(currentNode.children) == 0):
-            tup = currentNode.tuple
-            if(tup[0] > tup[1]):
-                return 1
-            else:
-                return 0
+    while len(currentNode.children) !=0:
+        currentSplitIndex = currentNode.splitIndex
+        currentSplitValue = currentNode.splitValue
+        if entry[int(currentSplitIndex)] < currentSplitValue:
+            currentNode = currentNode.children[0]
         else:
-            currentSplitIndex = currentNode.splitIndex
-            currentSplitValue = currentNode.splitValue
-            if entry[int(currentSplitIndex)] < currentSplitValue:
-                currentNode = currentNode.children[0]
-            else:
-                currentNode = currentNode.children[1]
+            currentNode = currentNode.children[1]
+
+    tup = currentNode.tuple
+    if tup[0] == tup[1]:
+        raise Exception("Uhm... what to do?")
+    if tup[0] > tup[1]:
+        return 1
+    else:
+        return 0
     return 0
 
+
+x= np.array([
+    [22,0,0,28,1],
+    [46,0,1,32,0],
+    [24,1,1,24,1],
+    [25,0,0,27,1],
+    [29,1,1,32,0],
+    [45,1,1,30,0],
+    [63,1,1,58,1],
+    [36,1,0,52,1],
+    [23,0,1,40,0],
+    [50,1,1,28,0]
+    ])
+
+xx= [
+    [22,0,0,28,1],
+    [46,0,1,32,0],
+    [24,1,1,24,1],
+    [25,0,0,27,1],
+    [29,1,1,32,0],
+    [45,1,1,30,0],
+    [63,1,1,58,1],
+    [36,1,0,52,1],
+    [23,0,1,40,0],
+    [50,1,1,28,0]
+    ]
+# 32.5 | 0.5 | 0.5 | > 20 | 0.5
+y = [0,0,0,0,0,1,1,1,1,1]
+print(RenderTree(tree_grow(x,y,0,0,5)))
 
 c = np.loadtxt('pima.txt', delimiter=',')
 x, y = c[:,0:8], c[:,8].astype(int)
