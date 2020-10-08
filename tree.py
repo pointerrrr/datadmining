@@ -60,7 +60,9 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         currentSplitIndex = -1
         for i in range(len(splitValues)):
             lList = []
+            lClassifier = []
             rList = []
+            rClassifier = []
             splitValue = splitValues[i]
             if splitValue[2] == -1 or splitValue[1] == 0.0:
                 continue
@@ -69,12 +71,12 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
             for i in range(len(nodeArray)):
                 temp = nodeArray[i][int(splitValue[2])]
                 temp2 = splitValue[0]
-                if nodeArray[i][int(splitValue[2])] < splitValue[0]:
-                    lList.append(nodeArray[i])
+                if nodeArray[i][int(splitValue[2])] <= splitValue[0]:
+                    lList.append(np.array(nodeArray[i]))
                     lClassifier.append(nodeClassifier[i])
                 else:
                     rList.append(nodeArray[i])
-                    rClassifier.append(nodeClassifier[i])
+                    rClassifier.append(np.array(nodeClassifier[i]))
             if len(lList) >= minleaf and len(rList) >= minleaf:
                 break
             
@@ -82,10 +84,10 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         if len(lList) < minleaf or len(rList) < minleaf:
                 continue
 
-        if len(lList) != 0:
+        if len(lList) > 0:
             ll, rl = getClassDistribution(lClassifier)
             toDoNodes.append(AnyNode(tuple=(ll, rl, np.array(lList), np.array(lClassifier)), parent=curNode))
-        if len(rList) != 0:
+        if len(rList) > 0:
             lr, rr = getClassDistribution(rClassifier)
             toDoNodes.append(AnyNode(tuple=(lr, rr, np.array(rList), np.array(rClassifier)), parent=curNode))
         if len(lList) != 0 or len(rList) != 0:
@@ -201,6 +203,3 @@ def prediction(entry, currentNode):
     else:
         return 0
     return 0
-
-
-
