@@ -4,14 +4,14 @@ import random
 
 
 def tree_grow(x, y, nmin, minleaf, nfeat):
-    newArray = np.empty(len(x))
-    for i in range(len(x)):
-        print( np.append(x[i], y[i]))
-        newArray[i] = np.concatenate(x[i], y[i])
+    newArray = np.array(x)
+    ###for i in range(len(x)):
+        ###print( np.append(x[i], y[i]))
+        ###newArray[i] = np.concatenate(x[i], y[i])
     goodNodes = 0
     for i in range(len(newArray)):
         goodNodes += newArray[i][-1]
-    start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, newArray), splitIndex = -1, splitValue = -1)
+    start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, x, y), splitIndex = -1, splitValue = -1)
     toDoNodes = [start]
 
     while len(toDoNodes) > 0:
@@ -19,19 +19,23 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         del toDoNodes[0]
 
         nodeArray = curNode.tuple[2]
+        nodeClassifier = curNode.tuple[3]
 
         if len(curNode.tuple[2]) < nmin:
             continue
 
-        possibleSplits = random_unique_list(nfeat, len(curNode.tuple[2][0] - 1))
+        possibleSplits = np.array(random_unique_list(nfeat, len(curNode.tuple[2][0])))
         splitValues = []
         for i in range(len(possibleSplits)):
             splitValue = consider_split(curNode, possibleSplits[i])
             splitValues.append(splitValue)
         splitValues = sorted(splitValues, key=lambda tup: tup[1])
         splitValues.reverse()
+        splitValues = np.array(splitValues)
         lList = []
+        lClassifier = []
         rList = []
+        rClassifier = []
         currentSplitValue = -1
         currentSplitIndex = -1
         for splitValue in splitValues:
@@ -42,51 +46,64 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
             lList = []
             rList = []
             for i in range(len(nodeArray)):
-                if nodeArray[i][splitValue[2]] < splitValue[0]:
+                if nodeArray[i][int(splitValue[2])] < splitValue[0]:
                     lList.append(nodeArray[i])
+                    lClassifier.append(nodeClassifier[i])
                 else:
                     rList.append(nodeArray[i])
+                    rClassifier.append(nodeClassifier[i])
             if len(lList) >= minleaf and len(rList) >= minleaf:
                 break
 
         if len(lList) != 0:
-            ll, rl = getClassDistribution(lList)
-            toDoNodes.append(AnyNode(tuple=(ll, rl, np.array(lList)), parent=curNode))
+            ll, rl = getClassDistribution(lList, lClassifier)
+            toDoNodes.append(AnyNode(tuple=(ll, rl, np.array(lList), np.array(lClassifier)), parent=curNode))
         if len(rList) != 0:
-            lr, rr = getClassDistribution(rList)
-            toDoNodes.append(AnyNode(tuple=(lr, rr, np.array(rList)), parent=curNode))
+            lr, rr = getClassDistribution(rList, rClassifier)
+            toDoNodes.append(AnyNode(tuple=(lr, rr, np.array(rList), np.array(rClassifier)), parent=curNode))
         if len(lList) != 0 or len(rList) != 0:
             curNode.splitIndex = currentSplitIndex
             curNode.splitValue = currentSplitValue
-        
-        curNode = 0
 
     return start
 
-def getClassDistribution(lijst):
+def getClassDistribution(lijst, classifier):
     goodNodes = 0
     for i in range(len(lijst)):
-        goodNodes += lijst[i][-1]
+        goodNodes += classifier[i]
     return (goodNodes, len(lijst)-goodNodes)
 
 def consider_split(node, splitIndex):
     splitIndex = int(splitIndex)
-    x = node.tuple[2].copy()
+    x = np.array(node.tuple[2].copy())
+    y = np.array(node.tuple[3].copy())
+
+    x2 = np.empty((len(x), len(x[0]) + 1))
+
+    for i in range(len(x)):
+        for j in range(len(x[0]) + 1):
+            if j == len(x[0]):
+                x2[i,j] = y[i]
+            else:
+                x2[i,j] = x[i,j]
+    x = x2
     print(splitIndex)
-    x = sorted(x, key=lambda z : z[splitIndex])
+    x = np.array(sorted(x, key=lambda z : z[splitIndex]))
     splits = findSplits(x, splitIndex)
     if len(splits) == 0:
         return (-1,-1,-1)
-    ln, rn = getClassDistribution(node.tuple[2])
+    ln, rn = getClassDistribution(node.tuple[2], node.tuple[3])
     iT = impurity((ln,rn))
     splitValues = []
     for i in splits:
-        l = x[0:i]
-        ld, rd = getClassDistribution(l)
+        l = x[:i, 0:-1]
+        lc = x[:i,-1]
+        ld, rd = getClassDistribution(l, lc)
         iL = impurity((ld, rd))
         piL = len(l) / len(x)
-        r = x[i:]
-        lr, rr = getClassDistribution(r)
+        r = x[i:, 0:-1]
+        rc = x[i:, -1]
+        lr, rr = getClassDistribution(r, rc)
         iR = impurity((lr, rr))
         piR = len(r) / len(x)
         splitValues.append(iT - (piL * iL + piR * iR))
@@ -94,8 +111,10 @@ def consider_split(node, splitIndex):
     for i in range(len(splitValues)):
         if splitValues[i] > max[1]:
             max = (i, splitValues[i])
-
-    return ((x[splits[max[0]]][splitIndex]+ x[splits[max[0]] - 1][splitIndex] ) / 2, splitValues[max[0]], splitIndex)
+    result = ((x[splits[max[0]]][splitIndex]+ x[splits[max[0]] - 1][splitIndex] ) / 2, splitValues[max[0]], splitIndex)
+    if result[2] % 1 != 0:
+        pass
+    return result
 
 
 
