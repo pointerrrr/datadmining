@@ -4,25 +4,26 @@ import random
 
 
 def tree_grow(x, y, nmin, minleaf, nfeat):
+    newArray = np.empty(len(x))
     for i in range(len(x)):
-        x[i].append(y[i])
+        print( np.append(x[i], y[i]))
+        newArray[i] = np.concatenate(x[i], y[i])
     goodNodes = 0
-    for i in range(len(x)):
-        goodNodes += x[i][-1]
-    start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, x), splitIndex = -1, splitValue = -1)
-    print(start.tuple)
+    for i in range(len(newArray)):
+        goodNodes += newArray[i][-1]
+    start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, newArray), splitIndex = -1, splitValue = -1)
     toDoNodes = [start]
 
     while len(toDoNodes) > 0:
         curNode = toDoNodes[0]
         del toDoNodes[0]
 
-        x= curNode.tuple[2]
+        nodeArray = curNode.tuple[2]
 
         if len(curNode.tuple[2]) < nmin:
             continue
 
-        possibleSplits = random_unique_list(nfeat, len(curNode.tuple[2][0]) -1)
+        possibleSplits = random_unique_list(nfeat, len(curNode.tuple[2][0] - 1))
         splitValues = []
         for i in range(len(possibleSplits)):
             splitValue = consider_split(curNode, possibleSplits[i])
@@ -40,22 +41,20 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
             currentSplitIndex = splitValue[2]
             lList = []
             rList = []
-            for i in range(len(x)):
-                if x[i][splitValue[2]] < splitValue[0]:
-                    lList.append(x[i])
+            for i in range(len(nodeArray)):
+                if nodeArray[i][splitValue[2]] < splitValue[0]:
+                    lList.append(nodeArray[i])
                 else:
-                    rList.append(x[i])
+                    rList.append(nodeArray[i])
             if len(lList) >= minleaf and len(rList) >= minleaf:
                 break
 
         if len(lList) != 0:
             ll, rl = getClassDistribution(lList)
-            lNode = AnyNode(tuple=(ll, rl, lList), parent=curNode)
-            toDoNodes.append(lNode)
+            toDoNodes.append(AnyNode(tuple=(ll, rl, np.array(lList)), parent=curNode))
         if len(rList) != 0:
             lr, rr = getClassDistribution(rList)
-            rNode = AnyNode(tuple=(lr, rr, rList), parent=curNode)
-            toDoNodes.append(rNode)
+            toDoNodes.append(AnyNode(tuple=(lr, rr, np.array(rList)), parent=curNode))
         if len(lList) != 0 or len(rList) != 0:
             curNode.splitIndex = currentSplitIndex
             curNode.splitValue = currentSplitValue
@@ -121,8 +120,6 @@ def findSplits(x, splitIndex):
 
     previous = squashedList[0]
     total = squashedList[0][1][0] + squashedList[0][1][1]
-    print("hoi")
-    print(previous[1][0] + previous[1][1])
     for i in range(1, len(squashedList)):
         if (previous[1][0] / (previous[1][0] + previous[1][1])) != (squashedList[i][1][0] / (squashedList[i][1][0] + squashedList[i][1][1])):
             previous = squashedList[i]
@@ -150,9 +147,44 @@ def random_unique_list(length, upperbound):
     return result
 
 def tree_pred(x, tr):
+    predictionList = []
+    for i in x:
+        predictionList.append(prediction(i, tr))
+    return predictionList
+
+def prediction(entry, tree):
+    currentNode = tree
+
+    while currentNode !=0:
+        if(len(currentNode.children) == 0):
+            tup = currentNode.tuple
+            if(tup[0] > tup[1]):
+                return 1
+            else:
+                return 0
+        else:
+            currentSplitIndex = currentNode.splitIndex
+            currentSplitValue = currentNode.splitValue
+            if entry[currentSplitIndex] < currentSplitValue:
+                currentNode = currentNode.children[0]
+            else:
+                currentNode = currentNode.children[1]
     return 0
 
-x= [
+x= np.array([
+    [22,0,0,28,1],
+    [46,0,1,32,0],
+    [24,1,1,24,1],
+    [25,0,0,27,1],
+    [29,1,1,32,0],
+    [45,1,1,30,0],
+    [63,1,1,58,1],
+    [36,1,0,52,1],
+    [23,0,1,40,0],
+    [50,1,1,28,0]
+    ])
+
+xx= [
     [22,0,0,28,1],
     [46,0,1,32,0],
     [24,1,1,24,1],
@@ -168,8 +200,10 @@ x= [
 y = [0,0,0,0,0,1,1,1,1,1]
 print(RenderTree(tree_grow(x,y,0,0,5)))
 
+#print(tree_pred(xx, tree_grow(x,y,3,0,5)))
+
 print("newTree!!!")
-x= [
+"""x= [
     [22,0,0,28,1],
     [46,0,1,32,0],
     [24,1,1,24,1],
@@ -180,11 +214,11 @@ x= [
     [36,1,0,52,1],
     [23,0,1,40,0],
     [50,1,1,28,0]
-    ]
-print(RenderTree(tree_grow(x,y,3,0,5)))
+    ]"""
+#print(RenderTree(tree_grow(x,y,3,0,5)))
 #tree_grow(x,y,0,0,5)
 
-[[22, 0, 0, 28, 1], 
+"""[[22, 0, 0, 28, 1], 
  [46, 0, 1, 32, 0], 
  [25, 0, 0, 27, 1], 
  [23, 0, 1, 40, 0], 
@@ -193,4 +227,4 @@ print(RenderTree(tree_grow(x,y,3,0,5)))
  [45, 1, 1, 30, 0], 
  [63, 1, 1, 58, 1], 
  [36, 1, 0, 52, 1], 
- [50, 1, 1, 28, 0]]
+ [50, 1, 1, 28, 0]]"""
