@@ -67,6 +67,12 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
 
     return start
 
+def tree_pred(x, tr):
+    predictionList = []
+    for i in x:
+        predictionList.append(prediction(i, tr))
+    return predictionList
+
 def getClassDistribution(lijst, classifier):
     goodNodes = 0
     for i in range(len(lijst)):
@@ -87,7 +93,7 @@ def consider_split(node, splitIndex):
             else:
                 x2[i,j] = x[i,j]
     x = x2
-    print(splitIndex)
+    ###print(splitIndex)
     x = np.array(sorted(x, key=lambda z : z[splitIndex]))
     splits = findSplits(x, splitIndex)
     if len(splits) == 0:
@@ -112,8 +118,6 @@ def consider_split(node, splitIndex):
         if splitValues[i] > max[1]:
             max = (i, splitValues[i])
     result = ((x[splits[max[0]]][splitIndex]+ x[splits[max[0]] - 1][splitIndex] ) / 2, splitValues[max[0]], splitIndex)
-    if result[2] % 1 != 0:
-        pass
     return result
 
 
@@ -165,12 +169,6 @@ def random_unique_list(length, upperbound):
         
     return result
 
-def tree_pred(x, tr):
-    predictionList = []
-    for i in x:
-        predictionList.append(prediction(i, tr))
-    return predictionList
-
 def prediction(entry, tree):
     currentNode = tree
 
@@ -184,7 +182,7 @@ def prediction(entry, tree):
         else:
             currentSplitIndex = currentNode.splitIndex
             currentSplitValue = currentNode.splitValue
-            if entry[currentSplitIndex] < currentSplitValue:
+            if entry[int(currentSplitIndex)] < currentSplitValue:
                 currentNode = currentNode.children[0]
             else:
                 currentNode = currentNode.children[1]
