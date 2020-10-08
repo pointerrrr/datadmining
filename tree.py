@@ -55,6 +55,8 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
             if len(lList) >= minleaf and len(rList) >= minleaf:
                 break
 
+        if len(lList) < minleaf or len(rList) < minleaf:
+                continue
         if len(lList) != 0:
             ll, rl = getClassDistribution(lList, lClassifier)
             toDoNodes.append(AnyNode(tuple=(ll, rl, np.array(lList), np.array(lClassifier)), parent=curNode))
@@ -188,60 +190,10 @@ def prediction(entry, tree):
                 currentNode = currentNode.children[1]
     return 0
 
-x= np.array([
-    [22,0,0,28,1],
-    [46,0,1,32,0],
-    [24,1,1,24,1],
-    [25,0,0,27,1],
-    [29,1,1,32,0],
-    [45,1,1,30,0],
-    [63,1,1,58,1],
-    [36,1,0,52,1],
-    [23,0,1,40,0],
-    [50,1,1,28,0]
-    ])
 
-xx= [
-    [22,0,0,28,1],
-    [46,0,1,32,0],
-    [24,1,1,24,1],
-    [25,0,0,27,1],
-    [29,1,1,32,0],
-    [45,1,1,30,0],
-    [63,1,1,58,1],
-    [36,1,0,52,1],
-    [23,0,1,40,0],
-    [50,1,1,28,0]
-    ]
-# 32.5 | 0.5 | 0.5 | > 20 | 0.5
-y = [0,0,0,0,0,1,1,1,1,1]
-print(RenderTree(tree_grow(x,y,0,0,5)))
+c = np.loadtxt('pima.txt', delimiter=',')
+x, y = c[:,0:8], c[:,8].astype(int)
 
-#print(tree_pred(xx, tree_grow(x,y,3,0,5)))
-
-print("newTree!!!")
-"""x= [
-    [22,0,0,28,1],
-    [46,0,1,32,0],
-    [24,1,1,24,1],
-    [25,0,0,27,1],
-    [29,1,1,32,0],
-    [45,1,1,30,0],
-    [63,1,1,58,1],
-    [36,1,0,52,1],
-    [23,0,1,40,0],
-    [50,1,1,28,0]
-    ]"""
-#print(RenderTree(tree_grow(x,y,3,0,5)))
-#tree_grow(x,y,0,0,5)
-
-"""[[22, 0, 0, 28, 1], 
- [46, 0, 1, 32, 0], 
- [25, 0, 0, 27, 1], 
- [23, 0, 1, 40, 0], 
- [24, 1, 1, 24, 1], 
- [29, 1, 1, 32, 0], 
- [45, 1, 1, 30, 0], 
- [63, 1, 1, 58, 1], 
- [36, 1, 0, 52, 1], 
- [50, 1, 1, 28, 0]]"""
+tr = tree_grow(x=x, y=y, nmin=20, minleaf=5, nfeat=8)
+y_pred = tree_pred(x, tr)
+print('%.2f' % np.mean(y == y_pred))
