@@ -105,6 +105,38 @@ def tree_pred(x, tr):
         predictionList.append(prediction(i, tr))
     return predictionList
 
+def tree_grow_b(x, y, nmin, minleaf, nfeat, m):
+    indices = []
+    for i in range(len(x)):
+        indices.append(random.randint(0,len(x)-1))
+
+    result = []
+
+    for i in range(m):
+        xsample = []
+        ysample = []
+        for i in indices:
+            xsample.append(x[i])
+            ysample.append(y[i])
+        result.append(tree_grow(xsample, ysample, nmin, minleaf, nfeat))
+
+    return result
+
+def tree_pred_b(x, tr):
+    predLists = []
+    for tree in tr:
+        predLists.append(tree_pred(x, tree))
+
+    result = []
+    for j in range(len(x)):
+        total = 0
+        totalOne = 0
+        for i in range(len(predLists)):        
+            total += 1
+            totalOne += predLists[i][j]
+        result.append(1 if totalOne > (total - totalOne) else 0)
+    return result
+
 def getClassDistribution(classifier):
     goodNodes = 0
     for i in range(len(classifier)):
@@ -203,3 +235,10 @@ def prediction(entry, currentNode):
     else:
         return 0
     return 0
+
+c = np.loadtxt('credit.txt', delimiter=',', skiprows=1)
+x, y = c[:,0:5], c[:,5].astype(int)
+
+trs = tree_grow_b(x=x, y=y, nmin=2, minleaf=1, nfeat=4, m=50)
+y_pred = tree_pred_b(x, trs)
+print('%.2f' % np.mean(y == y_pred))
