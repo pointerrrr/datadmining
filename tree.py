@@ -230,3 +230,6 @@ def prediction(entry, currentNode):
         return 1
     else:
         return 0
+
+c = np.loadtxt('eclipse-metrics-packages-2.0.csv', delimiter=';')
+x, y = c[:,2] + c[:,4:], c[:,3].astype(int)
