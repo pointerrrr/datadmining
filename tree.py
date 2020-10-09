@@ -2,24 +2,14 @@ import numpy as np
 from anytree import AnyNode, RenderTree
 import random
 
-counter = 1
-
 def tree_grow(x, y, nmin, minleaf, nfeat):
-    newArray = np.array(x)
-    ###for i in range(len(x)):
-        ###print( np.append(x[i], y[i]))
-        ###newArray[i] = np.concatenate(x[i], y[i])
-    # Goodnodes --> class = 1
     goodNodes = 0
-    for i in range(len(newArray)):
-        goodNodes += newArray[i][-1]
-    start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, x, y), splitIndex = -1, splitValue = -1, counter = 0)
-    toDoNodes = [start]
+    for i in y:
+        goodNodes += i
+    start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, x, y), splitIndex = -1, splitValue = -1)
 
+    toDoNodes = [start]
     while len(toDoNodes) > 0:
-        global counter
-        if counter == 36:
-            a = 1
         curNode = toDoNodes[0]
         del toDoNodes[0]
 
@@ -29,8 +19,7 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         if len(nodeArray) < minleaf:
                 raise Exception("Dit mag niet voor komen")
         if len(nodeArray) < nmin:
-            continue
-         
+            continue         
 
         possibleSplits = np.array(random_unique_list(nfeat, len(curNode.tuple[2][0])))
         splitValues = []
@@ -41,6 +30,7 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
             splitValues.append(splitValue)
         splitValues = sorted(splitValues, key=lambda tup: tup[1])
 
+        #There are no valid splits on this node.
         if len(splitValues) == 0:
             continue
 
@@ -48,8 +38,7 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         for i in range(len(splitValues)):
             temp.append(splitValues[i][1])
         length = len(np.unique(np.array(temp))) 
-        if(length!= len(splitValues)):
-            a = 0
+        
         splitValues.reverse()
         splitValues = np.array(splitValues)
         lList = []
@@ -69,14 +58,14 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
             currentSplitValue = splitValue[0]
             currentSplitIndex = splitValue[2]
             for i in range(len(nodeArray)):
-                temp = nodeArray[i][int(splitValue[2])]
-                temp2 = splitValue[0]
+                #python thinks splitValue[2] is a float, because the other elements of the tuple are, but it's not
                 if nodeArray[i][int(splitValue[2])] <= splitValue[0]:
                     lList.append(np.array(nodeArray[i]))
                     lClassifier.append(nodeClassifier[i])
                 else:
                     rList.append(nodeArray[i])
                     rClassifier.append(np.array(nodeClassifier[i]))
+            #make sure to only split of neither of the child nodes would violate the minleaf constraint
             if len(lList) >= minleaf and len(rList) >= minleaf:
                 break
             
@@ -93,9 +82,6 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         if len(lList) != 0 or len(rList) != 0:
             curNode.splitIndex = currentSplitIndex
             curNode.splitValue = currentSplitValue
-            
-            curNode.counter = counter
-            counter += 1
 
     return start
 
@@ -106,8 +92,6 @@ def tree_pred(x, tr):
     return predictionList
 
 def tree_grow_b(x, y, nmin, minleaf, nfeat, m):
-    
-
     result = []
 
     for i in range(m):
@@ -143,14 +127,15 @@ def tree_pred_b(x, tr):
 
 def getClassDistribution(classifier):
     goodNodes = 0
-    for i in range(len(classifier)):
-        goodNodes += classifier[i]
-    return (goodNodes, len(classifier)-goodNodes)
+    for i in classifier:
+        goodNodes += i
+    return (goodNodes, len(classifier) - goodNodes)
 
 def consider_split(node, splitIndex):
+    #splitIndex is sometimes seen as float by python, because it is in a tuple with other floats, but it is always an int
     splitIndex = int(splitIndex)
-    x = np.array(node.tuple[2].copy())
-    y = np.array(node.tuple[3].copy())
+    x = np.array(node.tuple[2])
+    y = np.array(node.tuple[3])
 
     x2 = np.empty((len(x), len(x[0]) + 1))
 
@@ -161,8 +146,8 @@ def consider_split(node, splitIndex):
             else:
                 x2[i,j] = x[i,j]
     x = x2
-    ###print(splitIndex)
     x = np.array(sorted(x, key=lambda z : z[splitIndex]))
+
     splits = findSplits(x, splitIndex)
     if len(splits) == 0:
         return (-1,-1,-1)
@@ -170,16 +155,23 @@ def consider_split(node, splitIndex):
     iT = impurity((ln,rn))
     splitValues = []
     for i in splits:
+        #list for left node
         l = x[:i, 0:-1]
+        #classifiers for left node
         lc = x[:i,-1]
+        #class distribution for left node
         ld, rd = getClassDistribution(lc)
+        #impurity of left node
         iL = impurity((ld, rd))
         piL = len(l) / len(x)
+        #right node..
         r = x[i:, 0:-1]
         rc = x[i:, -1]
         lr, rr = getClassDistribution(rc)
         iR = impurity((lr, rr))
         piR = len(r) / len(x)
+        #..right node
+        #add split value of node to list of all splitvalues in node
         splitValues.append(iT - ((piL * iL) + (piR * iR)))
     max = (-1, 0)
     for i in range(len(splitValues)):
@@ -191,9 +183,9 @@ def consider_split(node, splitIndex):
     return result
 
 
-
+#find all valid splits inside node
 def findSplits(x, splitIndex):
-    splits = []     
+    splits = []
     prev = x[0]
     for i in range(1,len(x)):
         if x[i][splitIndex] != prev[splitIndex]:
@@ -205,7 +197,7 @@ def findSplits(x, splitIndex):
 def impurity(node):
     return (node[0] / (node[0] + node[1])) * (node[1] / (node[0] + node[1]))
 
-
+#return a list of unique random integer between 0 and "upperbound" of "length"
 def random_unique_list(length, upperbound):
     result = np.empty(length)
     indices = np.empty(upperbound)
@@ -238,4 +230,3 @@ def prediction(entry, currentNode):
         return 1
     else:
         return 0
-    return 0
