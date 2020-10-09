@@ -232,7 +232,9 @@ def prediction(entry, currentNode):
         return 0
 
 c = np.loadtxt('eclipse-metrics-packages-2.0.csv', delimiter=';', skiprows=1, usecols=np.arange(2,211))
-x, y = np.append(c[:,0], c[:,2:]), c[:,1].astype(int)
+y = c[:,1].astype(int)
+x = c[:,:]
+np.delete(c, 1, 1)
 y = list(map(lambda x : 1 if x > 0 else 0, y))
 result = tree_grow(x, y, 15, 5, 41)
 print(RenderTree(result))
