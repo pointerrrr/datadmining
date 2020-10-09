@@ -231,10 +231,17 @@ def prediction(entry, currentNode):
     else:
         return 0
 
-c = np.loadtxt('eclipse-metrics-packages-2.0.csv', delimiter=';', skiprows=1, usecols=np.arange(2,211))
+c = np.loadtxt('eclipse-metrics-packages-2.0.csv', delimiter=';', skiprows=1, usecols=np.arange(2,44))
 y = c[:,1].astype(int)
 x = c[:,:]
-np.delete(c, 1, 1)
+x = np.delete(x, 1, 1)
 y = list(map(lambda x : 1 if x > 0 else 0, y))
-result = tree_grow(x, y, 15, 5, 41)
-print(RenderTree(result))
+tree = tree_grow(x, y, 15, 5, 41)
+
+d = np.loadtxt('eclipse-metrics-packages-3.0.csv', delimiter=';', skiprows=1, usecols=np.arange(2,44))
+e = d[:,1].astype(int)
+f = d[:,:]
+f = np.delete(f, 1, 1)
+e = list(map(lambda x : 1 if x > 0 else 0, e))
+prediction = tree_pred(f, tree)
+print('%.2f' % np.mean(e == prediction))
