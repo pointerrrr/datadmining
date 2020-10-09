@@ -244,4 +244,31 @@ f = d[:,:]
 f = np.delete(f, 1, 1)
 e = list(map(lambda x : 1 if x > 0 else 0, e))
 prediction = tree_pred(f, tree)
-print('%.2f' % np.mean(e == prediction))
+#print('%.2f' % np.mean(e == prediction))
+
+result_b = tree_grow_b(x, y, 15, 5, 41, 100)
+prediction_b = tree_pred_b(f, result_b)
+
+
+
+TP = 0
+FP = 0
+TN = 0
+FN = 0
+
+for i in range(len(e)):
+    TP += 1 if prediction[i] == 1 and e[i] == 1 else 0
+    FP += 1 if prediction[i] == 1 and e[i] == 0 else 0
+    TN += 1 if prediction[i] == 0 and e[i] == 0 else 0
+    FN += 1 if prediction[i] == 0 and e[i] == 1 else 0
+
+for i in range(len(e)):
+    TP += 1 if prediction_b[i] == 1 and e[i] == 1 else 0
+    FP += 1 if prediction_b[i] == 1 and e[i] == 0 else 0
+    TN += 1 if prediction_b[i] == 0 and e[i] == 0 else 0
+    FN += 1 if prediction_b[i] == 0 and e[i] == 1 else 0
+
+print("TP:" + str(TP))
+print("FP:" + str(FP))
+print("TN:" + str(TN))
+print("FN:" + str(FN))
