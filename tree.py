@@ -1,7 +1,21 @@
+#Mike Knoop (5853915)
+#Gideon Ogilvie (5936373)
+#Raka Schipperheijn (2827506)
+
+
 import numpy as np
 from anytree import AnyNode, RenderTree
 import random
 
+#tree_grow
+#x = a 2d matrix of n by m, containing n data entries of size m
+#y = a vector of classifiers for x of length n
+#nmin = amount of entries a node needs for it to be allowed to split
+#minleaf = minimal amount of entries a node needs to exist
+#nfeat = total number of features to be considered for a split
+#returns a tree, where each node contains a
+#tuple (correctly classified (int), incorrectly classified(int), entries in this node (float[,]), classifier for entries int[]),
+#an int on what column the data was split and a float of the input data, where the data has been split according to the gini index until nmin or minleaf is violated
 def tree_grow(x, y, nmin, minleaf, nfeat):
     goodNodes = 0
     for i in y:
@@ -85,6 +99,8 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
 
     return start
 
+#tree_pred
+#x = 
 def tree_pred(x, tr):
     predictionList = []
     for i in x:
@@ -243,7 +259,7 @@ e = d[:,1].astype(int)
 f = d[:,:]
 f = np.delete(f, 1, 1)
 e = list(map(lambda x : 1 if x > 0 else 0, e))
-prediction = tree_pred(f, tree)
+#prediction = tree_pred(f, tree)
 #print('%.2f' % np.mean(e == prediction))
 
 result_b = tree_grow_b(x, y, 15, 5, 41, 100)
@@ -256,11 +272,11 @@ FP = 0
 TN = 0
 FN = 0
 
-for i in range(len(e)):
+"""for i in range(len(e)):
     TP += 1 if prediction[i] == 1 and e[i] == 1 else 0
     FP += 1 if prediction[i] == 1 and e[i] == 0 else 0
     TN += 1 if prediction[i] == 0 and e[i] == 0 else 0
-    FN += 1 if prediction[i] == 0 and e[i] == 1 else 0
+    FN += 1 if prediction[i] == 0 and e[i] == 1 else 0"""
 
 for i in range(len(e)):
     TP += 1 if prediction_b[i] == 1 and e[i] == 1 else 0
