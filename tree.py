@@ -22,7 +22,10 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         goodNodes += i
     start = AnyNode(tuple=(goodNodes, len(y) - goodNodes, x, y), splitIndex = -1, splitValue = -1)
 
+    #add the start node to a queue
     toDoNodes = [start]
+    #check if you can split the current node and split it in the best position. add the two resulting nodes to this queue
+    #and keep going until the queue is empty
     while len(toDoNodes) > 0:
         curNode = toDoNodes[0]
         del toDoNodes[0]
@@ -35,6 +38,7 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         if len(nodeArray) < nmin:
             continue         
 
+        #find all possible splits and sort them from best to worst
         possibleSplits = np.array(random_unique_list(nfeat, len(curNode.tuple[2][0])))
         splitValues = []
         for i in range(len(possibleSplits)):
@@ -62,10 +66,6 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
         currentSplitValue = -1
         currentSplitIndex = -1
         for i in range(len(splitValues)):
-            lList = []
-            lClassifier = []
-            rList = []
-            rClassifier = []
             splitValue = splitValues[i]
             if splitValue[2] == -1 or splitValue[1] == 0.0:
                 continue
@@ -82,10 +82,13 @@ def tree_grow(x, y, nmin, minleaf, nfeat):
             #make sure to only split of neither of the child nodes would violate the minleaf constraint
             if len(lList) >= minleaf and len(rList) >= minleaf:
                 break
-            
+            lList = []
+            lClassifier = []
+            rList = []
+            rClassifier = []
 
         if len(lList) < minleaf or len(rList) < minleaf:
-                continue
+            continue
 
         if len(lList) > 0:
             ll, rl = get_class_distribution(lClassifier)
@@ -167,24 +170,26 @@ def get_class_distribution(classifier):
 def consider_split(node, splitIndex):
     #splitIndex is sometimes seen as float by python, because it is in a tuple with other floats, but it is always an int
     splitIndex = int(splitIndex)
-    x = np.array(node.tuple[2])
-    y = np.array(node.tuple[3])
+    originalX = node.tuple[2]
+    originalY = node.tuple[3]
 
-    x2 = np.empty((len(x), len(x[0]) + 1))
+    #copy x from the node so we can mutate it at will
+    x = np.empty((len(originalX), len(originalX[0]) + 1))
 
-    for i in range(len(x)):
-        for j in range(len(x[0]) + 1):
-            if j == len(x[0]):
-                x2[i,j] = y[i]
+    for i in range(len(originalX)):
+        for j in range(len(originalX[0]) + 1):
+            if j == len(originalX[0]):
+                x[i,j] = originalY[i]
             else:
-                x2[i,j] = x[i,j]
-    x = x2
+                x[i,j] = originalX[i][j]
+
     x = np.array(sorted(x, key=lambda z : z[splitIndex]))
 
+    #find the possible splits
     splits = find_splits(x, splitIndex)
     if len(splits) == 0:
         return (-1,-1,-1)
-    ln, rn = get_class_distribution(node.tuple[3])
+    ln, rn = get_class_distribution(originalY)
     iT = impurity((ln,rn))
     splitValues = []
     for i in splits:
